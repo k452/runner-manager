@@ -1,35 +1,49 @@
-use aws_sdk_sqs::{Client, Error};
-use dotenvy::dotenv;
-use std::env;
+use aws_sdk_sqs::Client;
+
 pub mod container;
+pub mod github;
+pub mod sqs;
 pub mod utils;
 
 #[tokio::main]
-pub async fn main() -> Result<(), Error> {
-    let shared_config = aws_config::load_from_env().await;
-    let client = Client::new(&shared_config);
-
-    dotenv().expect(".env file not found");
-    let queue_url = env::var("SQS_ENDPOINT").expect("no such var.");
+pub async fn main() {
+    let sqs = sqs::new(Client::new(&aws_config::load_from_env().await));
 
     loop {
-        println!("{}", "取得開始");
-        let receive_messages = client
-            .receive_message()
-            .queue_url(&queue_url)
-            .wait_time_seconds(20)
-            .send()
-            .await?;
+        let receive_messages = match sqs.receive().await {
+            Ok(v) => v,
+            Err(_err) => {
+                // eprintln!("receive failed.: {}", err);
+                continue;
+            }
+        };
 
-        for message in receive_messages.messages.unwrap_or_default() {
-            container::run(utils::extract_job_id_from_sqs_message(&message));
+        for message in receive_messages {
+            let job_id = match utils::extract_job_id_from_sqs_message(&message) {
+                Ok(v) => v,
+                Err(err) => {
+                    eprintln!("extract_job_id_from_sqs_message failed.: {}", err);
+                    continue;
+                }
+            };
 
-            client
-                .delete_message()
-                .queue_url(&queue_url)
-                .set_receipt_handle(message.receipt_handle);
+            let generated_jit_config = match github::generate_jit_config(&job_id).await {
+                Ok(v) => v,
+                Err(err) => {
+                    eprintln!("generate_jit_config failed.: {}", err);
+                    continue;
+                }
+            };
+
+            container::run(&job_id, &generated_jit_config);
+
+            match sqs.delete(message.receipt_handle).await {
+                Err(err) => {
+                    eprintln!("delete failed.: {}", err);
+                    continue;
+                }
+                _ => continue,
+            };
         }
-
-        println!("{}", "取得完了");
     }
 }
