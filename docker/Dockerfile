@@ -23,4 +23,4 @@ RUN curl -fsSL -o actions-runner.tar.gz https://github.com/actions/runner/releas
     tar xf actions-runner.tar.gz && \
     rm actions-runner.tar.gz
 
-CMD ["./run.sh", "--jitconfig", "${JIT_CONFIG}"]
+ENTRYPOINT ["/bin/sh", "-c", "./run.sh --jitconfig ${JIT_CONFIG}"]
