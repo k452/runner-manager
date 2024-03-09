@@ -2,8 +2,8 @@ use std::process::Command;
 
 use crate::utils::CONFIG;
 
-pub fn run(job_id: &str, jit_config: &str) -> Vec<u8> {
-    let output = Command::new("sh")
+pub fn run(job_id: &str, jit_config: &str) {
+    let _output = Command::new("sh")
         .arg("-c")
         .arg(format!(
             "docker run --name gha-runner-{job_id} --rm --detach -e JIT_CONFIG={jit_config} {0}",
@@ -11,6 +11,4 @@ pub fn run(job_id: &str, jit_config: &str) -> Vec<u8> {
         ))
         .output()
         .expect("failed to run container.\n id=[&job_id]");
-
-    output.stdout
 }

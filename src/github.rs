@@ -22,7 +22,7 @@ pub async fn generate_jit_config(job_id: &str) -> Result<String> {
         "name": format!("{0}-{job_id}", CONFIG.runner_name_prefix),
         "runner_group_name": format!("{0}", CONFIG.runner_group_name),
         "runner_group_id": 1,
-        "labels": vec![format!("[\"{0}\"]", CONFIG.runner_name_prefix)],
+        "labels": vec![format!("{0}", CONFIG.runner_name_prefix)],
         "work_folder": format!("{0}", CONFIG.runner_work_dir),
     });
 
