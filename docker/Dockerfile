@@ -1,14 +1,15 @@
 FROM debian:stable-slim
 
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN apt update && \
-    apt install wget curl -y && \
-    wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
-    dpkg -i packages-microsoft-prod.deb && \
-    rm packages-microsoft-prod.deb && \
-    apt update && \
-    apt install -y dotnet-sdk-6.0 && \
-    apt clean && rm -rf /var/lib/apt/lists/* && \
+RUN apt-get update && \
+    apt-get install wget curl jq libc6 libicu-dev -y && \
+    wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh && \
+    chmod +x ./dotnet-install.sh && \
+    ./dotnet-install.sh --version latest && \
+    rm ./dotnet-install.sh && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* && \
     useradd runner && \
     echo "runner:runner" | chpasswd && \
     chsh -s /usr/bin/bash runner && \
@@ -19,7 +20,7 @@ RUN apt update && \
 USER runner
 WORKDIR /actions-runner
 
-RUN curl -fsSL -o actions-runner.tar.gz https://github.com/actions/runner/releases/download/v2.313.0/actions-runner-linux-x64-2.313.0.tar.gz && \
+RUN curl -fsSL -o actions-runner.tar.gz https://github.com/actions/runner/releases/download/v2.314.1/actions-runner-linux-arm64-2.314.1.tar.gz && \
     tar xf actions-runner.tar.gz && \
     rm actions-runner.tar.gz
 
