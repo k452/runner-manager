@@ -1,15 +1,14 @@
-use std::{env, process::Command};
+use std::process::Command;
 
-pub fn run(job_id: String) -> Vec<u8> {
-    let container_image_name = env::var("CONTAINER_IMAGE_NAME").expect("no such var.");
+use crate::utils::CONFIG;
 
-    let output = Command::new("sh")
+pub fn run(job_id: &str, jit_config: &str) {
+    let _output = Command::new("sh")
         .arg("-c")
         .arg(format!(
-            "docker run --name gha-runner-{job_id} --rm --detach {container_image_name}"
+            "docker run --name gha-runner-{job_id} --rm --detach -e JIT_CONFIG={jit_config} {0}",
+            CONFIG.container_image_name
         ))
         .output()
         .expect("failed to run container.\n id=[&job_id]");
-
-    output.stdout
 }
